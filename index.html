@@ -1,0 +1,1102 @@
+<!DOCTYPE html>  
+<html lang="ar" dir="rtl">  
+<head>  
+  <meta charset="UTF-8" />  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />  
+  <title>نظام صيانة المحطات </title>  
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>  
+    :root {  
+      --primary: #3b82f6;  
+      --primary-dark: #1d4ed8;  
+      --primary-light: #60a5fa;  
+      --secondary: #64748b;  
+      --success: #10b981;  
+      --danger: #ef4444;  
+      --warning: #f59e0b;  
+      --bg-primary: #0f0f23;  
+      --bg-secondary: #1a1a2e;  
+      --bg-gradient: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);  
+      --card: rgba(20, 25, 45, 0.98);  
+      --glass: rgba(255, 255, 255, 0.08);  
+      --text-primary: #f8fafc;  
+      --text-secondary: #cbd5e1;  
+      --border: rgba(59, 130, 246, 0.2);  
+      --shadow: 0 32px 64px -16px rgba(0, 0, 0, 0.6);  
+      --shadow-hover: 0 40px 80px -20px rgba(0, 0, 0, 0.7);  
+      --shadow-glow: 0 0 32px rgba(59, 130, 246, 0.3);  
+      --muted: #94a3b8;  
+      --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-light));  
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {  
+      font-family: 'Cairo', sans-serif;  
+      background: var(--bg-gradient);  
+      color: var(--text-primary);  
+      min-height: 100vh;  
+      display: flex;  
+      align-items: center;  
+      justify-content: center;  
+      padding: 20px;  
+      overflow-x: hidden;  
+      position: relative;  
+    }
+
+    /* Animated Background */
+    body::before {  
+      content: '';  
+      position: fixed;  
+      inset: 0;  
+      background:  
+        radial-gradient(circle at 20% 10%, rgba(59,130,246,0.4) 0%, transparent 50%),  
+        radial-gradient(circle at 80% 90%, rgba(16,185,129,0.3) 0%, transparent 50%),  
+        radial-gradient(circle at 10% 80%, rgba(245,158,11,0.3) 0%, transparent 50%),  
+        radial-gradient(circle at 90% 30%, rgba(239,68,68,0.2) 0%, transparent 50%);  
+      z-index: -1;  
+      animation: pulseBg 15s ease-in-out infinite;  
+    }
+
+    @keyframes pulseBg {  
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }  
+      33% { transform: scale(1.1) rotate(120deg); opacity: 0.9; }  
+      66% { transform: scale(1.05) rotate(240deg); opacity: 0.8; }  
+    }
+
+    /* Enhanced Card */
+    .surface-card{  
+      background: var(--card);  
+      backdrop-filter: blur(30px);  
+      border: 1px solid var(--glass);  
+      border-radius: 28px;  
+      padding: 40px;  
+      box-shadow: var(--shadow);  
+      width: min(1200px, 98%);  
+      position: relative;  
+      overflow: hidden;  
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);  
+    }
+
+    .surface-card::before{  
+      content:'';  
+      position:absolute;  
+      top:0; left:0; right:0;  
+      height: 6px;  
+      background: var(--gradient-primary);  
+      box-shadow: 0 4px 16px rgba(59,130,246,0.4);  
+    }
+
+    .surface-card:hover {  
+      box-shadow: var(--shadow-hover);  
+      transform: translateY(-4px);  
+    }
+
+    /* Enhanced Title */
+    .header-title{  
+      font-size: 32px;  
+      font-weight: 800;  
+      margin-bottom: 28px;  
+      background: var(--gradient-primary);  
+      -webkit-background-clip: text;  
+      -webkit-text-fill-color: transparent;  
+      background-clip: text;  
+      text-align: center;  
+      position: relative;  
+    }
+
+    .header-title::after {  
+      content: '';  
+      position: absolute;  
+      bottom: -8px;  
+      left: 50%;  
+      transform: translateX(-50%);  
+      width: 80px;  
+      height: 4px;  
+      background: var(--gradient-primary);  
+      border-radius: 2px;  
+      box-shadow: 0 2px 8px rgba(59,130,246,0.4);  
+    }
+
+    /* Compact Login Form */
+    .login-container {  
+      max-width: 420px;  
+      margin: 0 auto;  
+      padding: 32px 24px;  
+    }
+
+    .form-group {  
+      margin-bottom: 20px;  
+      text-align: right;  
+    }  
+
+    .form-group label {  
+      display: block;  
+      margin-bottom: 8px;  
+      color: var(--text-secondary);  
+      font-weight: 700;  
+      font-size: 15px;  
+    }
+
+    .form-group input,  
+    .form-group select,  
+    .form-group textarea {  
+      width: 100%;  
+      background: rgba(30,41,59,0.85);  
+      border: 2px solid var(--border);  
+      border-radius: 20px;  
+      padding: 16px 20px;  
+      color: var(--text-primary);  
+      font-size: 16px;  
+      font-family: inherit;  
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);  
+      text-align: right;  
+      outline: none;  
+    }  
+
+    .form-group textarea {  
+      min-height: 100px;  
+      resize: vertical;  
+    }
+
+    .form-group input:focus,  
+    .form-group select:focus,  
+    .form-group textarea:focus {  
+      border-color: var(--primary);  
+      box-shadow: 0 0 0 4px rgba(59,130,246,0.15), var(--shadow-glow);  
+      background: rgba(30,41,59,0.98);  
+      transform: translateY(-1px);  
+    }
+
+    .form-grid {  
+      display: grid;  
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));  
+      gap: 20px;  
+      align-items: start;  
+    }  
+
+    .full-width {  
+      grid-column: 1 / -1;  
+    }
+
+    /* Enhanced Buttons */
+    .btn, .btn-login, .btn-reset, .btn-submit, .btn-logout, .btn-edit, .view-toggle-btn, .btn-cancel, .btn-change, .btn-password {  
+      border: none;  
+      border-radius: 20px;  
+      font-family: inherit;  
+      font-weight: 700;  
+      cursor: pointer;  
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);  
+      position: relative;  
+      overflow: hidden;  
+    }
+
+    .btn-login, .btn-submit, .btn-change, .btn-reset {  
+      width: 100%;  
+      padding: 16px 24px;  
+      color: #fff;  
+      background: var(--gradient-primary);  
+      box-shadow: 0 12px 32px rgba(59,130,246,0.4);  
+      font-size: 16px;  
+    }  
+
+    .btn-login:hover,  .btn-change:hover {  
+      transform: translateY(-3px);  
+      box-shadow: #10b981;  
+    }
+
+    .btn-reset:hover, .btn-cancel:hover, .btn-submit:hover {  
+      background: #10b981(211, 100, 155, 0.25);  
+      transform: translateY(-2px);  
+    }
+
+    .btn-logout {  
+      background: linear-gradient(135deg, var(--danger), #dc2626);  
+      color: #fff;  
+      padding: 12px 24px;  
+      width: auto;  
+      font-size: 14px;  
+      box-shadow: 0 8px 24px rgba(239,68,68,0.4);  
+    }
+
+    .btn-logout:hover {  
+      transform: translateY(-2px);  
+      box-shadow: 0 16px 32px rgba(239,68,68,0.5);  
+    }
+
+    .btn-edit {  
+      padding: 10px 16px;  
+      background: linear-gradient(135deg, var(--warning), #eab308);  
+      color: #111827;  
+      width: auto;  
+      border-radius: 16px;  
+      font-weight: 800;  
+      font-size: 13px;  
+      box-shadow: 0 6px 20px rgba(245,158,11,0.4);  
+    }
+
+    .btn-edit:hover {  
+      transform: translateY(-2px);  
+      box-shadow: 0 12px 28px rgba(245,158,11,0.5);  
+    }
+
+    /* Action Buttons Container */
+    .action-buttons {  
+      display: flex;  
+      gap: 16px;  
+      margin: 24px 0;  
+      justify-content: center;  
+      flex-wrap: wrap;  
+    }
+
+    .view-toggle-btn, .btn-password {  
+      padding: 14px 20px;  
+      margin: 0 8px 16px;  
+      background: rgba(148,163,184,0.15);  
+      border: 2px solid var(--border);  
+      color: var(--text-primary);  
+      font-size: 15px;  
+      min-width: 160px;  
+    }  
+
+    .view-toggle-btn.active, .btn-password:hover {  
+      background: var(--gradient-primary);  
+      border-color: transparent;  
+      box-shadow: 0 12px 32px rgba(59,130,246,0.4);  
+      transform: translateY(-2px);  
+    }
+
+    .btn-container {  
+      display: grid;  
+      grid-template-columns: 1fr 1fr;  
+      gap: 16px;  
+      margin-top: 24px;  
+    }  
+
+    @media (max-width: 520px) {  
+      .btn-container {  
+        grid-template-columns: 1fr;  
+      }  
+    }
+
+    /* Search */
+    .search-container {  
+      margin: 20px 0 24px;  
+      display: flex;  
+      justify-content: center;  
+    }  
+
+    .search-input {  
+      width: min(600px, 100%);  
+      padding: 16px 24px;  
+      border-radius: 24px;  
+      border: 2px solid var(--border);  
+      background: rgba(30,41,59,0.8);  
+      color: var(--text-primary);  
+      font-family: inherit;  
+      font-size: 16px;  
+      outline: none;  
+      transition: all 0.3s ease;  
+    }  
+
+    .search-input:focus {  
+      border-color: var(--primary);  
+      box-shadow: 0 0 0 4px rgba(59,130,246,0.15), var(--shadow-glow);  
+    }
+
+    /* Enhanced Table */
+    .table-container {  
+      width: 100%;  
+      overflow: auto;  
+      border: 1px solid var(--border);  
+      border-radius: 24px;  
+      background: rgba(15,23,42,0.4);  
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);  
+    }  
+
+    table {  
+      width: 100%;  
+      border-collapse: collapse;  
+      min-width: 1000px;  
+    }  
+
+    th, td {  
+      padding: 16px 12px;  
+      border-bottom: 1px solid rgba(148,163,184,0.2);  
+      text-align: right;  
+      vertical-align: middle;  
+      font-size: 15px;  
+      color: var(--text-primary);  
+    }  
+
+    th {  
+      position: sticky;  
+      top: 0;  
+      background: rgba(30,41,59,0.98);  
+      z-index: 10;  
+      font-weight: 800;  
+      border-bottom: 2px solid var(--border);  
+      white-space: nowrap;  
+    }  
+
+    tr:hover td {  
+      background: rgba(59,130,246,0.1);  
+      transform: scale(1.01);  
+    }
+
+    /* Status Box */
+    #statusBox {  
+      margin-top: 12px;  
+      padding: 14px 18px;  
+      border-radius: 16px;  
+      border: 2px dashed var(--border);  
+      color: var(--text-secondary);  
+      font-weight: 700;  
+      background: rgba(148,163,184,0.08);  
+      text-align: center;  
+      font-size: 15px;  
+      transition: all 0.3s ease;  
+    }  
+
+    .bg-urgent {  
+      border-color: rgba(239,68,68,0.6) !important;  
+      color: #fecaca !important;  
+      background: rgba(239,68,68,0.15) !important;  
+      box-shadow: 0 0 20px rgba(239,68,68,0.3) !important;  
+    }  
+
+    .bg-normal {  
+      border-color: rgba(16,185,129,0.6) !important;  
+      color: #bbf7d0 !important;  
+      background: rgba(16,185,129,0.15) !important;  
+      box-shadow: 0 0 20px rgba(16,185,129,0.3) !important;  
+    }  
+
+    .bg-Whenstopping {  
+      border-color: rgba(245,158,11,0.7) !important;  
+      color: #fde68a !important;  
+      background: rgba(245,158,11,0.15) !important;  
+      box-shadow: 0 0 20px rgba(245,158,11,0.3) !important;  
+    }
+
+    /* Enhanced Modal */
+    .modal {  
+      display: none;  
+      position: fixed;  
+      inset: 0;  
+      background: rgba(0,0,0,0.7);  
+      backdrop-filter: blur(8px);  
+      z-index: 1000;  
+      align-items: center;  
+      justify-content: center;  
+      padding: 20px;  
+      animation: fadeIn 0.3s ease;  
+    }  
+
+    @keyframes fadeIn {  
+      from { opacity: 0; }  
+      to { opacity: 1; }  
+    }
+
+    .modal-content {  
+      width: min(550px, 95%);  
+      background: rgba(20, 25, 45, 0.99);  
+      border: 1px solid var(--glass);  
+      border-radius: 28px;  
+      box-shadow: var(--shadow-hover);  
+      padding: 32px;  
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);  
+    }  
+
+    @keyframes slideUp {  
+      from { transform: translateY(30px); opacity: 0; }  
+      to { transform: translateY(0); opacity: 1; }  
+    }
+
+    .modal-header {  
+      font-size: 22px;  
+      font-weight: 900;  
+      margin-bottom: 20px;  
+      text-align: center;  
+      background: var(--gradient-primary);  
+      -webkit-background-clip: text;  
+      -webkit-text-fill-color: transparent;  
+      background-clip: text;  
+    }  
+
+    .modal-footer {  
+      display: grid;  
+      grid-template-columns: 1fr 1fr;  
+      gap: 16px;  
+      margin-top: 24px;  
+    }
+
+    /* Toast Notification */
+    .toast {  
+      position: fixed;  
+      bottom: 24px;  
+      left: 24px;  
+      padding: 16px 24px;  
+      border-radius: 20px;  
+      color: #fff;  
+      font-weight: 800;  
+      box-shadow: var(--shadow-hover);  
+      z-index: 2000;  
+      transform: translateY(100px);  
+      animation: toastIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;  
+    }  
+
+    @keyframes toastIn {  
+         to { transform: translateY(0); }  
+    }  
+    
+
+    /* Responsive Design */
+    @media (max-width: 768px) {  
+      .surface-card { padding: 28px 20px; }  
+      .header-title { font-size: 26px; }  
+      .form-grid { grid-template-columns: 1fr; }  
+      .action-buttons { flex-direction: column; align-items: center; }  
+      .view-toggle-btn, .btn-password { width: 100%; max-width: 280px; }  
+    }
+
+    @media (max-width: 480px) {  
+      .surface-card { padding: 24px 16px; }  
+      .header-title { font-size: 24px; }  
+      .btn-container { gap: 12px; }  
+    }
+
+    /* Spinner */
+    .spinner {  
+      display: inline-block;  
+      width: 20px; height: 20px;  
+      border: 3px solid rgba(255,255,255,0.3);  
+      border-radius: 50%;  
+      border-top-color: white;  
+      animation: spin 1s ease-in-out infinite;  
+      margin-left: 12px;  
+      vertical-align: middle;  
+    }  
+
+    @keyframes spin {  
+      to { transform: rotate(360deg); }  
+    }
+      #errorMsg {  
+      color: #fecaca;  
+      margin-top: 20px;  
+      padding: 16px 20px;  
+      border-radius: 20px;  
+      background: rgba(239,68,68,0.15);  
+      border: 2px solid rgba(239,68,68,0.4);  
+      font-weight: 700;  
+      text-align: center;  
+      display: none;  
+      font-size: 15px;  
+     box-shadow: 0 4px 16px rgba(239,68,68,0.2);
+    }
+
+    /* Error Message */
+    #errorMsg {  
+      color: #fecaca;  
+      margin-top: 16px;  
+      padding: 14px 18px;  
+      border-radius: 16px;  
+      background: rgba(239,68,68,0.15);  
+      border: 1px solid rgba(239,68,68,0.4);  
+      font-weight: 700;  
+      text-align: center;  
+      display: none;  
+    }
+    @keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+#errorMsg {
+  animation: none; /* إعادة تعيين الأنيميشن */
+  transition: all 0.3s ease;
+}
+  </style>  
+</head>
+
+<body>
+
+  <!-- نافذة تغيير كلمة المرور -->  
+  <div id="changePasswordModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="changePasswordTitle">  
+    <div class="modal-content">  
+      <div class="modal-header" id="changePasswordTitle">تغيير كلمة المرور</div>
+
+      <div class="form-group">  
+        <label for="currentPassword">كلمة المرور الحالية</label>  
+        <input type="password" id="currentPassword" placeholder="أدخل كلمة المرور الحالية" autocomplete="current-password">  
+      </div>
+
+      <div class="form-group">  
+        <label for="newPassword">كلمة المرور الجديدة</label>  
+        <input type="password" id="newPassword" placeholder="أدخل كلمة المرور الجديدة" autocomplete="new-password">  
+      </div>
+
+      <div class="form-group">  
+        <label for="confirmPassword">تأكيد كلمة المرور</label>  
+        <input type="password" id="confirmPassword" placeholder="أعد إدخال كلمة المرور الجديدة" autocomplete="new-password">  
+      </div>
+
+      <div class="modal-footer">  
+        <button class="btn-change" type="button" onclick  class ="btn-cancel:hover">إلغاء</button>  
+        <button class="btn-change" type="button" onclick="changePassword()">تغيير</button>  
+      </div>  
+    </div>  
+  </div>
+
+  <!-- تسجيل الدخول -->  
+  <section id="loginSection" class="surface-card login-container" aria-label="تسجيل الدخول">  
+    <div class="header-title">تسجيل الدخول</div>
+
+    <div class="form-group">  
+      <label for="userInput">اسم المستخدم</label>  
+      <input type="text" id="userInput" placeholder="أدخل اسم المستخدم" autocomplete="username">  
+    </div>
+
+    <div class="form-group" style="margin-bottom: 24px;">  
+      <label for="passInput">كلمة السر</label>  
+      <input type="password" id="passInput" placeholder="******" autocomplete="current-password">  
+    </div>
+
+    <div class="btn-container">  
+      <button class="btn-login" type="button" onclick="validateLogin()">دخول <div class="spinner" style="display:none;"></div></button>  
+    </div>
+
+    <p id="errorMsg">خطأ في البيانات!</p>  
+  </section>
+
+  <!-- قسم الأدمن -->  
+  <section id="adminSection" class="surface-card" style="display:none;" aria-label="لوحة الأدمن">  
+    <div class="header-title">كافة طلبات المحطات</div>
+
+    <div class="search-container">  
+      <input type="text" class="search-input" id="adminSearch" placeholder="بحث في البيانات..." onkeyup="filterTable('adminTable', this.value)">  
+    </div>
+
+    <div class="table-container">  
+      <table id="adminTable">  
+        <thead>  
+          <tr>  
+            <th>المحطة</th>   
+            <th>المجموعة</th>  
+            <th>رقم الطلب</th>  
+            <th>تاريخ الطلب</th>  
+            <th>نوع الأعمال</th>  
+            <th>موضوع طلب</th>  
+            <th>الحالة</th>  
+            <th>وضع الطلب</th>  
+            <th>الأعمال المنفذة</th>  
+            <th>القطع التبديلية</th>  
+            <th>ملاحظات</th>  
+          </tr>  
+        </thead>  
+        <tbody id="tableBody"></tbody>  
+      </table>  
+        <div style="margin-top:16px; display:flex; justify-content:center;">  
+      <button class="btn-logout" type="button" onclick="location.reload()">تسجيل الخروج</button>  
+    </div>  
+  </section>
+
+  <!-- قسم المستخدم -->  
+<main id="mainContainer" class="surface-card" style="display:none;" aria-label="نموذج صيانة المحطة">  
+  <div class="header-title">إدخال صيانة المحطة</div>
+
+  <div style="text-align:center; display: flex; justify-content: center; gap: 5px; flex-wrap: wrap;">  
+    <button class="view-toggle-btn active" id="btnForm" type="button" onclick="toggleView('form')">إضافة طلب جديد</button>  
+    <button class="view-toggle-btn" id="btnTable" type="button" onclick="toggleView('table')">عرض طلباتي</button>
+    <button class="view-toggle-btn" type="button" onclick="openPasswordModal()">تغيير كلمة المرور</button>
+  </div>
+
+    <!-- نموذج الإدخال -->  
+    <div id="formView">  
+      <form id="maintenanceForm">   
+        <input type="hidden" name="currentUser" id="currentUserHidden">  
+        <input type="hidden" name="row" id="editRow" value="-1">
+
+        <div class="form-grid">  
+          <div class="form-group">  
+            <label for="groupSelect">المجموعة</label>  
+            <select name="groupName" id="groupSelect" required>  
+              <option disabled selected value="">اختر المجموعة</option>  
+            </select>  
+          </div>
+
+          <div class="form-group">  
+            <label>رقم طلب الصيانة</label>  
+            <input type="text" name="orderNum" placeholder="أدخل رقم الطلب" required>  
+          </div>
+
+          <div class="form-group">  
+            <label>تاريخ الطلب</label>  
+            <input type="date" name="orderDate" required>  
+          </div>
+
+          <div class="form-group">  
+            <label>نوع العمل</label>  
+            <select name="workType" required>  
+              <option disabled selected value="">اختر نوع العمل</option>  
+              <option>كهرباء</option>  
+              <option>ميكانيك</option>  
+              <option>تحكم</option>  
+              <option>كيمياء</option>  
+              <option>مرافق</option>  
+            </select>  
+          </div>
+
+          <div class="form-group">  
+            <label>وضع الطلب</label>  
+            <select name="orderPos" required>  
+              <option disabled selected value="">اختر وضع الطلب</option>  
+              <option>قيد التنفيذ</option>  
+              <option>قيد الاختبار</option>  
+              <option>تم التنفيذ</option>  
+            </select>  
+          </div>
+
+          <div class="form-group">  
+            <label>الحالة</label>  
+            <select id="statusSelect" name="status" required>  
+              <option disabled selected value="">اختر الحالة</option>  
+              <option value="عاجل">عاجل</option>  
+              <option value="عادي">عادي</option>  
+              <option value="لحين التوقف">لحين التوقف</option>  
+            </select>  
+            <div id="statusBox">يرجى تحديد الحالة</div>  
+          </div>
+
+          <div class="form-group full-width">  
+            <label>موضوع الطلب</label>  
+            <textarea name="subject" placeholder="عنوان مختصر"></textarea>  
+          </div>
+
+          <div class="form-group full-width">  
+            <label>الأعمال المنفذة</label>  
+            <textarea name="doneWork" placeholder="ما الذي تم إنجازه؟"></textarea>  
+          </div>
+
+          <div class="form-group full-width">  
+            <label>القطع التبديلية المستخدمة</label>  
+            <textarea name="spareParts" placeholder="ما القطع التبديلية التي تم استخدامها"></textarea>  
+          </div>
+
+          <div class="form-group full-width">  
+            <label>ملاحظات</label>  
+            <textarea name="notes" placeholder="أي ملاحظات إضافية"></textarea>  
+          </div>  
+        </div>
+
+        <div class="btn-container">  
+          <button type="submit" class="btn-submit" id="submitBtn"><span>إرسال الطلب</span></button>  
+          <button type="reset" class="btn-reset" onclick="resetUI()">إعادة تعيين</button>  
+        </div>  
+      </form>  
+    </div>
+
+    <!-- جدول طلباتي -->  
+    <div id="tableView" style="display:none;">  
+      <div class="header-title" style="margin-bottom: 10px;">سجل طلباتي</div>
+
+      <div class="search-container">  
+        <input type="text" class="search-input" id="userSearch" placeholder="بحث في طلباتي..." onkeyup="filterTable('userTable', this.value)">  
+      </div>
+
+      <div class="table-container">  
+        <table id="userTable">  
+          <thead>  
+            <tr>  
+              <th>المجموعة</th>  
+              <th>رقم الطلب</th>  
+              <th>تاريخ الطلب</th>  
+              <th>نوع الأعمال</th>  
+              <th>موضوع طلب</th>  
+              <th>الحالة</th>  
+              <th>وضع الطلب</th>  
+              <th>الأعمال المنفذة</th>  
+              <th>القطع التبديلية</th>  
+              <th>ملاحظات</th>  
+              <th>تعديل</th>  
+            </tr>  
+          </thead>  
+          <tbody id="userTableBody"></tbody>  
+        </table>  
+      </div>  
+    </div>  
+  </main>
+
+  <script>  
+    // روابط السكريبتات
+    const USERS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCAS-GycCF3dVTny1RfXGxhh0mYbHyepDKDtBhEdC3YNW3MEebhM3l_DcqO1TXrCsh/exec'; // ضع رابط السكريبت الخاص بالمستخدمين هنا
+    const FORM_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGd0ajxCkLl3EjXNTaZFKCZl6zQ5q-AaGXscs2aTNeiJK9VALai2Gj1XSM2b5yaVXK/exec';
+
+
+    // منع الزر الأيمن
+    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    let currentUserData = null;
+
+    function formatDate(dateString) {  
+      if (!dateString || dateString === "-" || dateString === "") return "-";  
+      try {  
+        const date = new Date(dateString);  
+        if (isNaN(date.getTime())) return dateString;  
+        const day = String(date.getDate()).padStart(2, '0');  
+        const month = String(date.getMonth() + 1).padStart(2, '0');  
+        const year = date.getFullYear();  
+        return `${day}/${month}/${year}`;  
+      } catch (e) { return dateString; }  
+    }
+
+    // تشخيص البيانات
+    function debugData() {
+      console.log("🔍 تشخيص البيانات...");
+      fetch(FORM_SCRIPT_URL + '?action=get')
+        .then(r => r.json())
+        .then(data => {
+          console.log("📊 جميع البيانات:", data);
+          console.log("👤 المستخدم:", document.getElementById("currentUserHidden").value);
+        })
+        .catch(err => console.error("❌ خطأ:", err));
+    }
+
+    function validateLogin() {  
+      const user = document.getElementById("userInput").value.trim();  
+      const pass = document.getElementById("passInput").value;  
+      const error = document.getElementById("errorMsg");
+
+      if (!user || !pass) { error.style.display = "block"; return; }
+
+      error.style.display = "none";  
+      const loginBtn = event.target;
+      loginBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;margin-left:10px;"></div>جاري التحقق...';
+      loginBtn.disabled = true;
+
+      fetch(`${USERS_SCRIPT_URL}?action=validate&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`)  
+        .then(r => r.json())  
+        .then(data => {  
+          loginBtn.innerHTML = 'دخول';
+          loginBtn.disabled = false;
+
+          if (data.success) {  
+            currentUserData = data.userData;  
+            document.getElementById("currentUserHidden").value = user;
+            document.getElementById("loginSection").style.display = "none";  
+
+            if (user === "admin") {  
+              document.getElementById("adminSection").style.display = "block";  
+              loadAdminData();  
+            } else {  
+              document.getElementById("mainContainer").style.display = "block";  
+              loadUserGroups();  
+              loadUserRequests();  
+              setTimeout(debugData, 1000); // تشخيص
+            }  
+          } else {  
+            error.style.display = "block";  
+          }  
+        })  
+        .catch(err => {  
+          console.error(err);  
+          loginBtn.innerHTML = 'دخول';
+          loginBtn.disabled = false;
+          error.textContent = "فشل الاتصال بالخادم!";  
+          error.style.display = "block";  
+        });  
+    }
+
+    function loadUserGroups() {  
+      const groupSelect = document.getElementById("groupSelect");  
+      groupSelect.innerHTML = '<option>جاري تحميل...</option>';  
+
+      fetch(`${USERS_SCRIPT_URL}?action=getGroups&user=${encodeURIComponent(document.getElementById("currentUserHidden").value)}`)  
+        .then(r => r.json())  
+        .then(data => {  
+          groupSelect.innerHTML = '<option disabled selected value="">اختر المجموعة</option>';  
+          if (data.groups && data.groups.length > 0) {  
+            data.groups.forEach(group => {  
+              const option = document.createElement("option");  
+              option.text = group; option.value = group;  
+              groupSelect.add(option);  
+            });  
+          }  
+        })  
+        .catch(() => groupSelect.innerHTML = '<option>فشل التحميل</option>');  
+    }
+
+    function loadAdminData() {  
+      const tableBody = document.getElementById("tableBody");  
+      tableBody.innerHTML = '<tr><td colspan="11">جاري التحميل...</td></tr>';
+
+      fetch(FORM_SCRIPT_URL + '?action=get')  
+        .then(r => r.json())  
+        .then(data => {  
+          tableBody.innerHTML = "";  
+          if (!data || data.length === 0) {  
+            tableBody.innerHTML = '<tr><td colspan="11" style="color:var(--muted);">لا توجد بيانات</td></tr>';  
+            return;  
+          }  
+          data.forEach(row => {  
+            const tr = document.createElement("tr");  
+            tr.innerHTML = `  
+              <td>${row.station || '-'}</td>  
+              <td>${row.groupName || '-'}</td>  
+              <td>${row.orderNum || '-'}</td>  
+              <td>${formatDate(row.orderDate)}</td>  
+              <td>${row.workType || '-'}</td>  
+              <td>${row.subject || '-'}</td>  
+              <td>${row.status || '-'}</td>  
+              <td>${row.orderPos || '-'}</td>  
+              <td>${row.doneWork || '-'}</td>  
+              <td>${row.spareParts || '-'}</td>  
+              <td>${row.notes || '-'}</td>  
+            `;  
+            tableBody.appendChild(tr);  
+          });  
+        })  
+        .catch(err => {  
+          console.error(err);  
+          tableBody.innerHTML = '<tr><td colspan="11" style="color:var(--danger);">فشل التحميل</td></tr>';  
+        });  
+    }
+
+    function loadUserRequests() {  
+      const tableBody = document.getElementById("userTableBody");  
+      const currentUser = document.getElementById("currentUserHidden").value;
+      console.log("🔍 البحث عن:", currentUser);
+
+      tableBody.innerHTML = '<tr><td colspan="11">جاري التحميل...</td></tr>';
+
+      fetch(FORM_SCRIPT_URL + '?action=get')  
+        .then(r => r.json())  
+        .then(data => {  
+          console.log("📊 البيانات:", data);
+          
+          const myRequests = (data || []).filter(row => 
+            row.currentUser === currentUser || row.groupName === currentUser
+          );
+          
+          console.log("✅ طلباتي:", myRequests);
+
+          tableBody.innerHTML = "";  
+          if (myRequests.length === 0) {  
+            tableBody.innerHTML = '<tr><td colspan="11" style="color:var(--muted);">لا توجد طلبات لك</td></tr>';  
+            return;  
+          }
+
+          myRequests.forEach(row => {  
+            const tr = document.createElement("tr");  
+            tr.innerHTML = `  
+              <td>${row.groupName || '-'}</td>  
+              <td>${row.orderNum || '-'}</td>  
+              <td>${formatDate(row.orderDate)}</td>  
+              <td>${row.workType || '-'}</td>  
+              <td>${row.subject || '-'}</td>  
+              <td>${row.status || '-'}</td>  
+              <td>${row.orderPos || '-'}</td>  
+              <td>${row.doneWork || '-'}</td>  
+                           <td>${row.spareParts || '-'}</td>  
+              <td>${row.notes || '-'}</td>  
+              <td><button class="btn-edit" onclick="editRow(${row.row})">تعديل</button></td>  
+            `;  
+            tableBody.appendChild(tr);  
+          });  
+        })  
+        .catch(err => {  
+          console.error("❌ خطأ:", err);  
+          tableBody.innerHTML = '<tr><td colspan="11" style="color:var(--danger);">فشل التحميل</td></tr>';  
+        });  
+    }
+
+    function filterTable(tableId, searchTerm) {  
+      const table = document.getElementById(tableId);  
+      const rows = table.getElementsByTagName("tr");  
+      const searchLower = searchTerm.toLowerCase();
+
+      for (let i = 1; i < rows.length; i++) {  
+        const row = rows[i];  
+        const cells = row.getElementsByTagName("td");  
+        let found = false;
+
+        for (let j = 0; j < cells.length; j++) {  
+          if (cells[j].textContent.toLowerCase().includes(searchLower)) { 
+            found = true; 
+            break; 
+          }  
+        }  
+        row.style.display = found ? "" : "none";  
+      }  
+    }
+
+    function toggleView(view) {  
+      const formView = document.getElementById('formView');  
+      const tableView = document.getElementById('tableView');  
+      const btnForm = document.getElementById('btnForm');  
+      const btnTable = document.getElementById('btnTable');
+
+      if (view === 'form') {  
+        formView.style.display = 'block';  
+        tableView.style.display = 'none';  
+        btnForm.classList.add('active');  
+        btnTable.classList.remove('active');  
+        resetUI();  
+      } else {  
+        formView.style.display = 'none';  
+        tableView.style.display = 'block';  
+        btnForm.classList.remove('active');  
+        btnTable.classList.add('active');  
+        loadUserRequests();  
+      }  
+    }
+
+    function editRow(rowNumber) {  
+      fetch(FORM_SCRIPT_URL + '?action=getRow&row=' + rowNumber)  
+        .then(r => r.json())  
+        .then(data => {  
+          document.getElementById("groupSelect").value = data.groupName || "";  
+          document.querySelector('input[name="orderNum"]').value = data.orderNum || "";  
+          document.querySelector('input[name="orderDate"]').value = data.orderDate ? new Date(data.orderDate).toISOString().split('T')[0] : "";  
+          document.querySelector('select[name="workType"]').value = data.workType || "";  
+          document.querySelector('select[name="orderPos"]').value = data.orderPos || "";  
+          document.querySelector('select[name="status"]').value = data.status || "";  
+          document.querySelector('textarea[name="subject"]').value = data.subject || "";  
+          document.querySelector('textarea[name="doneWork"]').value = data.doneWork || "";  
+          document.querySelector('textarea[name="spareParts"]').value = data.spareParts || "";  
+          document.querySelector('textarea[name="notes"]').value = data.notes || "";
+          document.getElementById("currentUserHidden").value = data.currentUser || "";
+
+          document.getElementById("editRow").value = data.row;
+          document.getElementById("submitBtn").innerHTML = '<span>تحديث الطلب</span>';
+
+          document.getElementById('formView').style.display = 'block';  
+          document.getElementById('tableView').style.display = 'none';  
+          document.getElementById('btnForm').classList.add('active');  
+          document.getElementById('btnTable').classList.remove('active');
+          updateStatusBox(data.status || "");  
+        })  
+        .catch(err => { console.error(err); alert("فشل تحميل البيانات"); });  
+    }
+
+    function updateStatusBox(status) {  
+      const box = document.getElementById("statusBox");  
+      box.classList.remove("bg-urgent", "bg-normal", "bg-Whenstopping");
+
+      if (status === "عاجل") {  
+        box.textContent = "الحالة: عاجل"; box.classList.add("bg-urgent");  
+      } else if (status === "عادي") {  
+        box.textContent = "الحالة: عادي"; box.classList.add("bg-normal");  
+      } else if (status === "لحين التوقف") {  
+        box.textContent = "الحالة: لحين التوقف"; box.classList.add("bg-Whenstopping");  
+      } else {  
+        box.textContent = "يرجى تحديد الحالة";  
+      }  
+    }
+
+    function resetUI() {  
+      document.getElementById("submitBtn").innerHTML = '<span>إرسال الطلب</span>';  
+      document.getElementById("statusSelect").value = "";  
+      updateStatusBox("");  
+      document.getElementById("editRow").value = "-1";  
+    }
+
+    // إرسال النموذج
+    document.getElementById("maintenanceForm").addEventListener("submit", function (e) {  
+      e.preventDefault();
+      const isEditMode = document.getElementById("submitBtn").innerHTML.includes("تحديث");  
+      const rowNumber = document.getElementById("editRow").value;
+      const submitBtn = document.getElementById("submitBtn");
+
+      submitBtn.disabled = true;  
+      submitBtn.innerHTML = '<div class="spinner"></div>جاري الحفظ...';
+
+      const formData = new FormData(this);  
+      formData.append("action", isEditMode ? "update" : "add");
+      if (isEditMode && rowNumber !== "-1") formData.append("row", rowNumber);
+
+      fetch(FORM_SCRIPT_URL, { method: 'POST', body: formData })  
+        .then(r => r.text())  
+        .then(response => {  
+          console.log("✅ رد الخادم:", response);
+          submitBtn.disabled = false;
+          showToast(isEditMode ? "تم التحديث!" : "تم الإضافة!");
+
+          setTimeout(() => {  
+            this.reset();  
+            resetUI();  
+            if (isEditMode) loadUserRequests();  
+          }, 1500);  
+        })  
+        .catch(error => {  
+          console.error("❌ خطأ:", error);  
+          submitBtn.disabled = false;  
+          submitBtn.innerHTML = isEditMode ? '<span>تحديث الطلب</span>' : '<span>إرسال الطلب</span>';  
+          alert("خطأ في الحفظ");  
+        });  
+    });
+
+    function showToast(message) {
+      const toast = document.createElement("div");  
+      toast.className = "toast";  
+      toast.style.background = "linear-gradient(135deg,#10b981,#059669)";  
+      toast.textContent = message;  
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2000);  
+    }
+
+    document.getElementById("statusSelect").addEventListener("change", function () {  
+      updateStatusBox(this.value);  
+    });
+
+    // كلمة المرور
+    function openPasswordModal() { document.getElementById("changePasswordModal").style.display = "flex"; }
+    function closePasswordModal() { 
+      document.getElementById("changePasswordModal").style.display = "none";  
+      document.getElementById("currentPassword").value = "";  
+      document.getElementById("newPassword").value = "";  
+      document.getElementById("confirmPassword").value = "";  
+    }
+
+    function changePassword() {  
+      const currentPass = document.getElementById("currentPassword").value;  
+      const newPass = document.getElementById("newPassword").value;  
+      const confirmPass = document.getElementById("confirmPassword").value;  
+      const currentUser = document.getElementById("currentUserHidden").value;
+
+      if (newPass !== confirmPass) { alert("كلمات المرور غير متطابقة"); return; }
+      if (!currentUser) { alert("سجل دخول أولاً"); return; }
+
+      fetch(USERS_SCRIPT_URL, {  
+        method: 'POST',  
+        body: new URLSearchParams({ action: 'changePassword', user: currentUser, currentPass, newPass })  
+      })  
+      .then(r => r.json())  
+      .then(data => {  
+        if (data.success) { alert("تم التغيير!"); closePasswordModal(); }  
+        else alert(data.message || "فشل التغيير");  
+      })  
+      .catch(() => alert("فشل الاتصال"));  
+    }
+
+    // Events
+    window.onclick = function (event) {  
+      if (event.target.id === "changePasswordModal") closePasswordModal();  
+    };
+
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && document.getElementById('loginSection').style.display !== 'none') {
+        validateLogin();
+      }
+    });
+
+    // تشغيل تلقائي للتشخيص بعد 3 ثوان
+    setTimeout(() => {
+      if (document.getElementById("mainContainer").style.display !== "none") {
+        debugData();
+      }
+    }, 3000);
+  </script>  
+</body>  
+</html>
