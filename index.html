@@ -544,7 +544,7 @@
       </div>
 
       <div class="modal-footer">  
-        <button class="btn-change" type="button" onclick  class ="btn-cancel:hover">إلغاء</button>  
+        <button class="btn-reset" type="button" onclick="closePasswordModal()">إلغاء</button>  
         <button class="btn-change" type="button" onclick="changePassword()">تغيير</button>  
       </div>  
     </div>  
@@ -698,7 +698,7 @@
       </form>  
     </div>
 
-    <!-- جدول طلباتي -->  
+    <!-- جدول طلباتي - معدل مع إضافة حقل المحطة -->
     <div id="tableView" style="display:none;">  
       <div class="header-title" style="margin-bottom: 10px;">سجل طلباتي</div>
 
@@ -710,6 +710,7 @@
         <table id="userTable">  
           <thead>  
             <tr>  
+              <th>اسم المحطة</th>  <!-- ✅ حقل جديد -->
               <th>المجموعة</th>  
               <th>رقم الطلب</th>  
               <th>تاريخ الطلب</th>  
@@ -731,9 +732,8 @@
 
   <script>  
     // روابط السكريبتات
-    const USERS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCAS-GycCF3dVTny1RfXGxhh0mYbHyepDKDtBhEdC3YNW3MEebhM3l_DcqO1TXrCsh/exec'; // ضع رابط السكريبت الخاص بالمستخدمين هنا
+    const USERS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCAS-GycCF3dVTny1RfXGxhh0mYbHyepDKDtBhEdC3YNW3MEebhM3l_DcqO1TXrCsh/exec'; 
     const FORM_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGd0ajxCkLl3EjXNTaZFKCZl6zQ5q-AaGXscs2aTNeiJK9VALai2Gj1XSM2b5yaVXK/exec';
-
 
     // منع الزر الأيمن
     document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
@@ -749,18 +749,6 @@
         const year = date.getFullYear();  
         return `${day}/${month}/${year}`;  
       } catch (e) { return dateString; }  
-    }
-
-    // تشخيص البيانات
-    function debugData() {
-      console.log("🔍 تشخيص البيانات...");
-      fetch(FORM_SCRIPT_URL + '?action=get')
-        .then(r => r.json())
-        .then(data => {
-          console.log("📊 جميع البيانات:", data);
-          console.log("👤 المستخدم:", document.getElementById("currentUserHidden").value);
-        })
-        .catch(err => console.error("❌ خطأ:", err));
     }
 
     function validateLogin() {  
@@ -793,7 +781,6 @@
               document.getElementById("mainContainer").style.display = "block";  
               loadUserGroups();  
               loadUserRequests();  
-              setTimeout(debugData, 1000); // تشخيص
             }  
           } else {  
             error.style.display = "block";  
@@ -840,7 +827,7 @@
             return;  
           }  
           data.forEach(row => {  
-            const tr = document.createElement("tr");  
+                        const tr = document.createElement("tr");  
             tr.innerHTML = `  
               <td>${row.station || '-'}</td>  
               <td>${row.groupName || '-'}</td>  
@@ -863,33 +850,36 @@
         });  
     }
 
+    // ✅ دالة معدلة - إضافة حقل اسم المحطة للمستخدمين فقط
     function loadUserRequests() {  
       const tableBody = document.getElementById("userTableBody");  
       const currentUser = document.getElementById("currentUserHidden").value;
-      console.log("🔍 البحث عن:", currentUser);
+      console.log("🔍 البحث عن طلبات المستخدم:", currentUser);
 
-      tableBody.innerHTML = '<tr><td colspan="11">جاري التحميل...</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="12">جاري التحميل...</td></tr>';  // ✅ 12 بدلاً من 11
 
       fetch(FORM_SCRIPT_URL + '?action=get')  
         .then(r => r.json())  
         .then(data => {  
           console.log("📊 البيانات:", data);
           
+          // ✅ فلترة الطلبات الخاصة بالمستخدم (المحطة)
           const myRequests = (data || []).filter(row => 
-            row.currentUser === currentUser || row.groupName === currentUser
+            row.station === currentUser || row.groupName === currentUser
           );
           
           console.log("✅ طلباتي:", myRequests);
 
           tableBody.innerHTML = "";  
           if (myRequests.length === 0) {  
-            tableBody.innerHTML = '<tr><td colspan="11" style="color:var(--muted);">لا توجد طلبات لك</td></tr>';  
+            tableBody.innerHTML = '<tr><td colspan="12" style="color:var(--muted);">لا توجد طلبات لك</td></tr>';  // ✅ 12 بدلاً من 11
             return;  
           }
 
           myRequests.forEach(row => {  
             const tr = document.createElement("tr");  
             tr.innerHTML = `  
+              <td><strong>${row.station || currentUser || '-'}</strong></td>  <!-- ✅ حقل اسم المحطة (اسم اليوزر) -->
               <td>${row.groupName || '-'}</td>  
               <td>${row.orderNum || '-'}</td>  
               <td>${formatDate(row.orderDate)}</td>  
@@ -898,7 +888,7 @@
               <td>${row.status || '-'}</td>  
               <td>${row.orderPos || '-'}</td>  
               <td>${row.doneWork || '-'}</td>  
-                           <td>${row.spareParts || '-'}</td>  
+              <td>${row.spareParts || '-'}</td>  
               <td>${row.notes || '-'}</td>  
               <td><button class="btn-edit" onclick="editRow(${row.row})">تعديل</button></td>  
             `;  
@@ -907,7 +897,7 @@
         })  
         .catch(err => {  
           console.error("❌ خطأ:", err);  
-          tableBody.innerHTML = '<tr><td colspan="11" style="color:var(--danger);">فشل التحميل</td></tr>';  
+          tableBody.innerHTML = '<tr><td colspan="12" style="color:var(--danger);">فشل التحميل</td></tr>';  // ✅ 12 بدلاً من 11
         });  
     }
 
@@ -948,7 +938,7 @@
         tableView.style.display = 'block';  
         btnForm.classList.remove('active');  
         btnTable.classList.add('active');  
-        loadUserRequests();  
+        loadUserRequests();  // ✅ تحميل الجدول المُحدث
       }  
     }
 
@@ -1014,6 +1004,7 @@
 
       const formData = new FormData(this);  
       formData.append("action", isEditMode ? "update" : "add");
+      formData.append("station", document.getElementById("currentUserHidden").value);  // ✅ إضافة اسم المحطة تلقائياً
       if (isEditMode && rowNumber !== "-1") formData.append("row", rowNumber);
 
       fetch(FORM_SCRIPT_URL, { method: 'POST', body: formData })  
@@ -1091,12 +1082,6 @@
       }
     });
 
-    // تشغيل تلقائي للتشخيص بعد 3 ثوان
-    setTimeout(() => {
-      if (document.getElementById("mainContainer").style.display !== "none") {
-        debugData();
-      }
-    }, 3000);
   </script>  
 </body>  
 </html>
