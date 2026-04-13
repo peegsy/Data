@@ -943,13 +943,19 @@
     }
 
     function editRow(rowNumber) {  
-     fetch(FORM_SCRIPT_URL + '?action=getRow&row=' + rowNumber)  
-     .then(r => r.json())  
-     .then(data => {
+      fetch(FORM_SCRIPT_URL + '?action=getRow&row=' + rowNumber)  
+      .then(r => r.json())  
+      .then(data => {
+      // ✅ حفظ التاريخ الأصلي كما هو (بدون تحويل)
+       const originalDate = data.orderDate || "";
+    
       // ملء جميع حقول النموذج بالبيانات القديمة
       document.getElementById("groupSelect").value = data.groupName || "";  
       document.querySelector('input[name="orderNum"]').value = data.orderNum || "";  
-      document.querySelector('input[name="orderDate"]').value = data.orderDate ? new Date(data.orderDate).toISOString().split('T')[0] : "";  
+     
+       // ✅ التاريخ الأصلي كما هو (بدون تحويل إلى Date)
+      document.querySelector('input[name="orderDate"]').value = originalDate;
+       
       document.querySelector('select[name="workType"]').value = data.workType || "";  
       document.querySelector('select[name="orderPos"]').value = data.orderPos || "";  
       document.querySelector('select[name="status"]').value = data.status || "";  
@@ -957,13 +963,13 @@
       document.querySelector('textarea[name="doneWork"]').value = data.doneWork || "";  
       document.querySelector('textarea[name="spareParts"]').value = data.spareParts || "";  
       document.querySelector('textarea[name="notes"]').value = data.notes || "";
-      
+    
       // حفظ بيانات المستخدم والمحطة
       document.getElementById("currentUserHidden").value = data.currentUser || document.getElementById("currentUserHidden").value;
-      
+    
       // حفظ رقم الصف للتعديل
       document.getElementById("editRow").value = rowNumber;
-      
+    
       // تغيير نص الزر إلى "تحديث"
       document.getElementById("submitBtn").innerHTML = '<span>تحديث الطلب</span>';
 
@@ -972,17 +978,18 @@
       document.getElementById('tableView').style.display = 'none';  
       document.getElementById('btnForm').classList.add('active');  
       document.getElementById('btnTable').classList.remove('active');
-      
+    
       // تحديث صندوق الحالة
       updateStatusBox(data.status || "");  
-      
+    
       console.log("✅ تم تحميل البيانات للتعديل:", data);
+      console.log("📅 التاريخ الأصلي:", originalDate);
       })  
      .catch(err => { 
       console.error("❌ خطأ في تحميل البيانات:", err); 
       alert("فشل تحميل البيانات للتعديل!"); 
       });  
-}
+    }
 
     function updateStatusBox(status) {  
       const box = document.getElementById("statusBox");  
