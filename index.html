@@ -733,7 +733,7 @@
   <script>  
     // روابط السكريبتات
     const USERS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCAS-GycCF3dVTny1RfXGxhh0mYbHyepDKDtBhEdC3YNW3MEebhM3l_DcqO1TXrCsh/exec'; 
-    const FORM_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGd0ajxCkLl3EjXNTaZFKCZl6zQ5q-AaGXscs2aTNeiJK9VALai2Gj1XSM2b5yaVXK/exec';
+    const FORM_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyR-jXeW9j_IbZg_-ok9FGmsxZkz6vkJXjYAGd0kmFIrRH8UFJVysWMcwgmeVdLQtPm/exec';
 
     // منع الزر الأيمن
     document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
@@ -943,32 +943,46 @@
     }
 
     function editRow(rowNumber) {  
-      fetch(FORM_SCRIPT_URL + '?action=getRow&row=' + rowNumber)  
-        .then(r => r.json())  
-        .then(data => {  
-          document.getElementById("groupSelect").value = data.groupName || "";  
-          document.querySelector('input[name="orderNum"]').value = data.orderNum || "";  
-          document.querySelector('input[name="orderDate"]').value = data.orderDate ? new Date(data.orderDate).toISOString().split('T')[0] : "";  
-          document.querySelector('select[name="workType"]').value = data.workType || "";  
-          document.querySelector('select[name="orderPos"]').value = data.orderPos || "";  
-          document.querySelector('select[name="status"]').value = data.status || "";  
-          document.querySelector('textarea[name="subject"]').value = data.subject || "";  
-          document.querySelector('textarea[name="doneWork"]').value = data.doneWork || "";  
-          document.querySelector('textarea[name="spareParts"]').value = data.spareParts || "";  
-          document.querySelector('textarea[name="notes"]').value = data.notes || "";
-          document.getElementById("currentUserHidden").value = data.currentUser || "";
+     fetch(FORM_SCRIPT_URL + '?action=getRow&row=' + rowNumber)  
+     .then(r => r.json())  
+     .then(data => {
+      // ملء جميع حقول النموذج بالبيانات القديمة
+      document.getElementById("groupSelect").value = data.groupName || "";  
+      document.querySelector('input[name="orderNum"]').value = data.orderNum || "";  
+      document.querySelector('input[name="orderDate"]').value = data.orderDate ? new Date(data.orderDate).toISOString().split('T')[0] : "";  
+      document.querySelector('select[name="workType"]').value = data.workType || "";  
+      document.querySelector('select[name="orderPos"]').value = data.orderPos || "";  
+      document.querySelector('select[name="status"]').value = data.status || "";  
+      document.querySelector('textarea[name="subject"]').value = data.subject || "";  
+      document.querySelector('textarea[name="doneWork"]').value = data.doneWork || "";  
+      document.querySelector('textarea[name="spareParts"]').value = data.spareParts || "";  
+      document.querySelector('textarea[name="notes"]').value = data.notes || "";
+      
+      // حفظ بيانات المستخدم والمحطة
+      document.getElementById("currentUserHidden").value = data.currentUser || document.getElementById("currentUserHidden").value;
+      
+      // حفظ رقم الصف للتعديل
+      document.getElementById("editRow").value = rowNumber;
+      
+      // تغيير نص الزر إلى "تحديث"
+      document.getElementById("submitBtn").innerHTML = '<span>تحديث الطلب</span>';
 
-          document.getElementById("editRow").value = data.row;
-          document.getElementById("submitBtn").innerHTML = '<span>تحديث الطلب</span>';
-
-          document.getElementById('formView').style.display = 'block';  
-          document.getElementById('tableView').style.display = 'none';  
-          document.getElementById('btnForm').classList.add('active');  
-          document.getElementById('btnTable').classList.remove('active');
-          updateStatusBox(data.status || "");  
-        })  
-        .catch(err => { console.error(err); alert("فشل تحميل البيانات"); });  
-    }
+      // الانتقال لعرض النموذج
+      document.getElementById('formView').style.display = 'block';  
+      document.getElementById('tableView').style.display = 'none';  
+      document.getElementById('btnForm').classList.add('active');  
+      document.getElementById('btnTable').classList.remove('active');
+      
+      // تحديث صندوق الحالة
+      updateStatusBox(data.status || "");  
+      
+      console.log("✅ تم تحميل البيانات للتعديل:", data);
+      })  
+     .catch(err => { 
+      console.error("❌ خطأ في تحميل البيانات:", err); 
+      alert("فشل تحميل البيانات للتعديل!"); 
+      });  
+}
 
     function updateStatusBox(status) {  
       const box = document.getElementById("statusBox");  
@@ -986,12 +1000,14 @@
     }
 
     function resetUI() {  
-      document.getElementById("submitBtn").innerHTML = '<span>إرسال الطلب</span>';  
-      document.getElementById("statusSelect").value = "";  
-      updateStatusBox("");  
-      document.getElementById("editRow").value = "-1";  
+     // إعادة تعيين النموذج للإضافة الجديدة
+        document.getElementById("submitBtn").innerHTML = '<span>إرسال الطلب</span>';  
+        document.getElementById("statusSelect").value = "";  
+        document.getElementById("editRow").value = "-1";  // وضع الإضافة الجديدة
+         updateStatusBox("");  
+  
+         console.log("🔄 تم إعادة تعيين النموذج");
     }
-
     // إرسال النموذج
     document.getElementById("maintenanceForm").addEventListener("submit", function (e) {  
       e.preventDefault();
