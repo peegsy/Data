@@ -203,11 +203,11 @@
 
     .btn-login:hover,  .btn-change:hover {  
       transform: translateY(-3px);  
-      box-shadow: #10b981;  
+     box-shadow:  0 16px 32px rgba(16,185,129,0.4);  
     }
 
     .btn-reset:hover, .btn-cancel:hover, .btn-submit:hover {  
-      background: #10b981(211, 100, 155, 0.25);  
+      background: rgba(16,185,129,0.15); 
       transform: translateY(-2px);  
     }
 
@@ -514,10 +514,7 @@
   75% { transform: translateX(5px); }
 }
 
-#errorMsg {
-  animation: none; /* إعادة تعيين الأنيميشن */
-  transition: all 0.3s ease;
-}
+
   </style>  
 </head>
 
@@ -649,16 +646,10 @@
             </select>  
           </div>
 
-          <div class="form-group">  
-            <label>وضع الطلب</label>  
-            <select name="orderPos" required>  
-              <option disabled selected value="">اختر وضع الطلب</option>  
-              <option>قيد التنفيذ</option>  
-              <option>قيد الاختبار</option>  
-              <option>تم التنفيذ</option>  
-            </select>  
+         <div class="form-group full-width">  
+            <label>موضوع الطلب</label>  
+            <textarea name="subject" placeholder="عنوان مختصر"></textarea>  
           </div>
-
           <div class="form-group">  
             <label>الحالة</label>  
             <select id="statusSelect" name="status" required>  
@@ -670,10 +661,17 @@
             <div id="statusBox">يرجى تحديد الحالة</div>  
           </div>
 
-          <div class="form-group full-width">  
-            <label>موضوع الطلب</label>  
-            <textarea name="subject" placeholder="عنوان مختصر"></textarea>  
+
+          <div class="form-group">  
+            <label>وضع الطلب</label>  
+            <select name="orderPos" required>  
+              <option disabled selected value="">اختر وضع الطلب</option>  
+              <option>قيد التنفيذ</option>  
+              <option>قيد الاختبار</option>  
+              <option>تم التنفيذ</option>  
+            </select>  
           </div>
+
 
           <div class="form-group full-width">  
             <label>الأعمال المنفذة</label>  
@@ -731,380 +729,462 @@
   </main>
 
   <script>  
-    // روابط السكريبتات
-    const USERS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCAS-GycCF3dVTny1RfXGxhh0mYbHyepDKDtBhEdC3YNW3MEebhM3l_DcqO1TXrCsh/exec'; 
-    const FORM_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyR-jXeW9j_IbZg_-ok9FGmsxZkz6vkJXjYAGd0kmFIrRH8UFJVysWMcwgmeVdLQtPm/exec';
-
-    // منع الزر الأيمن
-    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-    let currentUserData = null;
-
-    function formatDate(dateString) {  
-      if (!dateString || dateString === "-" || dateString === "") return "-";  
-      try {  
-        const date = new Date(dateString);  
-        if (isNaN(date.getTime())) return dateString;  
-        const day = String(date.getDate()).padStart(2, '0');  
-        const month = String(date.getMonth() + 1).padStart(2, '0');  
-        const year = date.getFullYear();  
-        return `${day}/${month}/${year}`;  
-      } catch (e) { return dateString; }  
-    }
-
-    function validateLogin() {  
-      const user = document.getElementById("userInput").value.trim();  
-      const pass = document.getElementById("passInput").value;  
-      const error = document.getElementById("errorMsg");
-
-      if (!user || !pass) { error.style.display = "block"; return; }
-
-      error.style.display = "none";  
-      const loginBtn = event.target;
-      loginBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;margin-left:10px;"></div>جاري التحقق...';
-      loginBtn.disabled = true;
-
-      fetch(`${USERS_SCRIPT_URL}?action=validate&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`)  
-        .then(r => r.json())  
-        .then(data => {  
-          loginBtn.innerHTML = 'دخول';
-          loginBtn.disabled = false;
-
-          if (data.success) {  
-            currentUserData = data.userData;  
-            document.getElementById("currentUserHidden").value = user;
-            document.getElementById("loginSection").style.display = "none";  
-
-            if (user === "admin") {  
-              document.getElementById("adminSection").style.display = "block";  
-              loadAdminData();  
-            } else {  
-              document.getElementById("mainContainer").style.display = "block";  
-              loadUserGroups();  
-              loadUserRequests();  
-            }  
-          } else {  
-            error.style.display = "block";  
-          }  
-        })  
-        .catch(err => {  
-          console.error(err);  
-          loginBtn.innerHTML = 'دخول';
-          loginBtn.disabled = false;
-          error.textContent = "فشل الاتصال بالخادم!";  
-          error.style.display = "block";  
-        });  
-    }
-
-    function loadUserGroups() {  
-      const groupSelect = document.getElementById("groupSelect");  
-      groupSelect.innerHTML = '<option>جاري تحميل...</option>';  
-
-      fetch(`${USERS_SCRIPT_URL}?action=getGroups&user=${encodeURIComponent(document.getElementById("currentUserHidden").value)}`)  
-        .then(r => r.json())  
-        .then(data => {  
-          groupSelect.innerHTML = '<option disabled selected value="">اختر المجموعة</option>';  
-          if (data.groups && data.groups.length > 0) {  
-            data.groups.forEach(group => {  
-              const option = document.createElement("option");  
-              option.text = group; option.value = group;  
-              groupSelect.add(option);  
-            });  
-          }  
-        })  
-        .catch(() => groupSelect.innerHTML = '<option>فشل التحميل</option>');  
-    }
-
-    function loadAdminData() {  
-      const tableBody = document.getElementById("tableBody");  
-      tableBody.innerHTML = '<tr><td colspan="11">جاري التحميل...</td></tr>';
-
-      fetch(FORM_SCRIPT_URL + '?action=get')  
-        .then(r => r.json())  
-        .then(data => {  
-          tableBody.innerHTML = "";  
-          if (!data || data.length === 0) {  
-            tableBody.innerHTML = '<tr><td colspan="11" style="color:var(--muted);">لا توجد بيانات</td></tr>';  
-            return;  
-          }  
-          data.forEach(row => {  
-                        const tr = document.createElement("tr");  
-            tr.innerHTML = `  
-              <td>${row.station || '-'}</td>  
-              <td>${row.groupName || '-'}</td>  
-              <td>${row.orderNum || '-'}</td>  
-              <td>${formatDate(row.orderDate)}</td>  
-              <td>${row.workType || '-'}</td>  
-              <td>${row.subject || '-'}</td>  
-              <td>${row.status || '-'}</td>  
-              <td>${row.orderPos || '-'}</td>  
-              <td>${row.doneWork || '-'}</td>  
-              <td>${row.spareParts || '-'}</td>  
-              <td>${row.notes || '-'}</td>  
-            `;  
-            tableBody.appendChild(tr);  
-          });  
-        })  
-        .catch(err => {  
-          console.error(err);  
-          tableBody.innerHTML = '<tr><td colspan="11" style="color:var(--danger);">فشل التحميل</td></tr>';  
-        });  
-    }
-
-    // ✅ دالة معدلة - إضافة حقل اسم المحطة للمستخدمين فقط
-    function loadUserRequests() {  
-      const tableBody = document.getElementById("userTableBody");  
-      const currentUser = document.getElementById("currentUserHidden").value;
-      console.log("🔍 البحث عن طلبات المستخدم:", currentUser);
-
-      tableBody.innerHTML = '<tr><td colspan="12">جاري التحميل...</td></tr>';  // ✅ 12 بدلاً من 11
-
-      fetch(FORM_SCRIPT_URL + '?action=get')  
-        .then(r => r.json())  
-        .then(data => {  
-          console.log("📊 البيانات:", data);
-          
-          // ✅ فلترة الطلبات الخاصة بالمستخدم (المحطة)
-          const myRequests = (data || []).filter(row => 
-            row.station === currentUser || row.groupName === currentUser
-          );
-          
-          console.log("✅ طلباتي:", myRequests);
-
-          tableBody.innerHTML = "";  
-          if (myRequests.length === 0) {  
-            tableBody.innerHTML = '<tr><td colspan="12" style="color:var(--muted);">لا توجد طلبات لك</td></tr>';  // ✅ 12 بدلاً من 11
-            return;  
-          }
-
-          myRequests.forEach(row => {  
-            const tr = document.createElement("tr");  
-            tr.innerHTML = `  
-              <td><strong>${row.station || currentUser || '-'}</strong></td>  <!-- ✅ حقل اسم المحطة (اسم اليوزر) -->
-              <td>${row.groupName || '-'}</td>  
-              <td>${row.orderNum || '-'}</td>  
-              <td>${formatDate(row.orderDate)}</td>  
-              <td>${row.workType || '-'}</td>  
-              <td>${row.subject || '-'}</td>  
-              <td>${row.status || '-'}</td>  
-              <td>${row.orderPos || '-'}</td>  
-              <td>${row.doneWork || '-'}</td>  
-              <td>${row.spareParts || '-'}</td>  
-              <td>${row.notes || '-'}</td>  
-              <td><button class="btn-edit" onclick="editRow(${row.row})">تعديل</button></td>  
-            `;  
-            tableBody.appendChild(tr);  
-          });  
-        })  
-        .catch(err => {  
-          console.error("❌ خطأ:", err);  
-          tableBody.innerHTML = '<tr><td colspan="12" style="color:var(--danger);">فشل التحميل</td></tr>';  // ✅ 12 بدلاً من 11
-        });  
-    }
-
-    function filterTable(tableId, searchTerm) {  
-      const table = document.getElementById(tableId);  
-      const rows = table.getElementsByTagName("tr");  
-      const searchLower = searchTerm.toLowerCase();
-
-      for (let i = 1; i < rows.length; i++) {  
-        const row = rows[i];  
-        const cells = row.getElementsByTagName("td");  
-        let found = false;
-
-        for (let j = 0; j < cells.length; j++) {  
-          if (cells[j].textContent.toLowerCase().includes(searchLower)) { 
-            found = true; 
-            break; 
-          }  
-        }  
-        row.style.display = found ? "" : "none";  
-      }  
-    }
-
-    function toggleView(view) {  
-      const formView = document.getElementById('formView');  
-      const tableView = document.getElementById('tableView');  
-      const btnForm = document.getElementById('btnForm');  
-      const btnTable = document.getElementById('btnTable');
-
-      if (view === 'form') {  
-        formView.style.display = 'block';  
-        tableView.style.display = 'none';  
-        btnForm.classList.add('active');  
-        btnTable.classList.remove('active');  
-        resetUI();  
-      } else {  
-        formView.style.display = 'none';  
-        tableView.style.display = 'block';  
-        btnForm.classList.remove('active');  
-        btnTable.classList.add('active');  
-        loadUserRequests();  // ✅ تحميل الجدول المُحدث
-      }  
-    }
-
-    function editRow(rowNumber) {  
-      fetch(FORM_SCRIPT_URL + '?action=getRow&row=' + rowNumber)  
-      .then(r => r.json())  
-      .then(data => {
-      // ✅ حفظ التاريخ الأصلي كما هو (بدون تحويل)
-       const originalDate = data.orderDate || "";
-    
-      // ملء جميع حقول النموذج بالبيانات القديمة
-      document.getElementById("groupSelect").value = data.groupName || "";  
-      document.querySelector('input[name="orderNum"]').value = data.orderNum || "";  
-     
-       // ✅ التاريخ الأصلي كما هو (بدون تحويل إلى Date)
-      document.querySelector('input[name="orderDate"]').value = originalDate;
-       
-      document.querySelector('select[name="workType"]').value = data.workType || "";  
-      document.querySelector('select[name="orderPos"]').value = data.orderPos || "";  
-      document.querySelector('select[name="status"]').value = data.status || "";  
-      document.querySelector('textarea[name="subject"]').value = data.subject || "";  
-      document.querySelector('textarea[name="doneWork"]').value = data.doneWork || "";  
-      document.querySelector('textarea[name="spareParts"]').value = data.spareParts || "";  
-      document.querySelector('textarea[name="notes"]').value = data.notes || "";
-    
-      // حفظ بيانات المستخدم والمحطة
-      document.getElementById("currentUserHidden").value = data.currentUser || document.getElementById("currentUserHidden").value;
-    
-      // حفظ رقم الصف للتعديل
-      document.getElementById("editRow").value = rowNumber;
-    
-      // تغيير نص الزر إلى "تحديث"
-      document.getElementById("submitBtn").innerHTML = '<span>تحديث الطلب</span>';
-
-      // الانتقال لعرض النموذج
-      document.getElementById('formView').style.display = 'block';  
-      document.getElementById('tableView').style.display = 'none';  
-      document.getElementById('btnForm').classList.add('active');  
-      document.getElementById('btnTable').classList.remove('active');
-    
-      // تحديث صندوق الحالة
-      updateStatusBox(data.status || "");  
-    
-      console.log("✅ تم تحميل البيانات للتعديل:", data);
-      console.log("📅 التاريخ الأصلي:", originalDate);
-      })  
-     .catch(err => { 
-      console.error("❌ خطأ في تحميل البيانات:", err); 
-      alert("فشل تحميل البيانات للتعديل!"); 
-      });  
-    }
-
-    function updateStatusBox(status) {  
-      const box = document.getElementById("statusBox");  
-      box.classList.remove("bg-urgent", "bg-normal", "bg-Whenstopping");
-
-      if (status === "عاجل") {  
-        box.textContent = "الحالة: عاجل"; box.classList.add("bg-urgent");  
-      } else if (status === "عادي") {  
-        box.textContent = "الحالة: عادي"; box.classList.add("bg-normal");  
-      } else if (status === "لحين التوقف") {  
-        box.textContent = "الحالة: لحين التوقف"; box.classList.add("bg-Whenstopping");  
-      } else {  
-        box.textContent = "يرجى تحديد الحالة";  
-      }  
-    }
-
-    function resetUI() {  
-     // إعادة تعيين النموذج للإضافة الجديدة
-        document.getElementById("submitBtn").innerHTML = '<span>إرسال الطلب</span>';  
-        document.getElementById("statusSelect").value = "";  
-        document.getElementById("editRow").value = "-1";  // وضع الإضافة الجديدة
-         updateStatusBox("");  
+  // روابط السكريبتات - غيّرها بمعرفاتك
+  const USERS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCAS-GycCF3dVTny1RfXGxhh0mYbHyepDKDtBhEdC3YNW3MEebhM3l_DcqO1TXrCsh/exec'; 
+  const FORM_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgYpnrFMei272hVmf0wOKmBRExKjDreR62eCSPIzoISfMtT2p-ozarBFXek4BdBFYnRA/exec';
   
-         console.log("🔄 تم إعادة تعيين النموذج");
-    }
-    // إرسال النموذج
-    document.getElementById("maintenanceForm").addEventListener("submit", function (e) {  
-      e.preventDefault();
-      const isEditMode = document.getElementById("submitBtn").innerHTML.includes("تحديث");  
-      const rowNumber = document.getElementById("editRow").value;
-      const submitBtn = document.getElementById("submitBtn");
+  const webAppUrl = FORM_SCRIPT_URL; // 
+  // منع الزر الأيمن
+  document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  let currentUserData = null;
 
-      submitBtn.disabled = true;  
-      submitBtn.innerHTML = '<div class="spinner"></div>جاري الحفظ...';
+  function formatDate(dateString) {  
+    if (!dateString || dateString === "-" || dateString === "") return "-";  
+    try {  
+      const date = new Date(dateString);  
+      if (isNaN(date.getTime())) return dateString;  
+      const day = String(date.getDate()).padStart(2, '0');  
+      const month = String(date.getMonth() + 1).padStart(2, '0');  
+      const year = date.getFullYear();  
+      return `${day}/${month}/${year}`;  
+    } catch (e) { return dateString; }  
+  }
 
-      const formData = new FormData(this);  
-      formData.append("action", isEditMode ? "update" : "add");
-      formData.append("station", document.getElementById("currentUserHidden").value);  // ✅ إضافة اسم المحطة تلقائياً
-      if (isEditMode && rowNumber !== "-1") formData.append("row", rowNumber);
+  function validateLogin() {  
+    const user = document.getElementById("userInput").value.trim();  
+    const pass = document.getElementById("passInput").value;  
+    const error = document.getElementById("errorMsg");
 
-      fetch(FORM_SCRIPT_URL, { method: 'POST', body: formData })  
-        .then(r => r.text())  
-        .then(response => {  
-          console.log("✅ رد الخادم:", response);
-          submitBtn.disabled = false;
-          showToast(isEditMode ? "تم التحديث!" : "تم الإضافة!");
+    if (!user || !pass) { error.style.display = "block"; return; }
 
-          setTimeout(() => {  
-            this.reset();  
-            resetUI();  
-            if (isEditMode) loadUserRequests();  
-          }, 1500);  
-        })  
-        .catch(error => {  
-          console.error("❌ خطأ:", error);  
-          submitBtn.disabled = false;  
-          submitBtn.innerHTML = isEditMode ? '<span>تحديث الطلب</span>' : '<span>إرسال الطلب</span>';  
-          alert("خطأ في الحفظ");  
-        });  
-    });
+    error.style.display = "none";  
+    const loginBtn = event.target;
+    loginBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;margin-left:10px;"></div>جاري التحقق...';
+    loginBtn.disabled = true;
 
-    function showToast(message) {
-      const toast = document.createElement("div");  
-      toast.className = "toast";  
-      toast.style.background = "linear-gradient(135deg,#10b981,#059669)";  
-      toast.textContent = message;  
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 2000);  
-    }
-
-    document.getElementById("statusSelect").addEventListener("change", function () {  
-      updateStatusBox(this.value);  
-    });
-
-    // كلمة المرور
-    function openPasswordModal() { document.getElementById("changePasswordModal").style.display = "flex"; }
-    function closePasswordModal() { 
-      document.getElementById("changePasswordModal").style.display = "none";  
-      document.getElementById("currentPassword").value = "";  
-      document.getElementById("newPassword").value = "";  
-      document.getElementById("confirmPassword").value = "";  
-    }
-
-    function changePassword() {  
-      const currentPass = document.getElementById("currentPassword").value;  
-      const newPass = document.getElementById("newPassword").value;  
-      const confirmPass = document.getElementById("confirmPassword").value;  
-      const currentUser = document.getElementById("currentUserHidden").value;
-
-      if (newPass !== confirmPass) { alert("كلمات المرور غير متطابقة"); return; }
-      if (!currentUser) { alert("سجل دخول أولاً"); return; }
-
-      fetch(USERS_SCRIPT_URL, {  
-        method: 'POST',  
-        body: new URLSearchParams({ action: 'changePassword', user: currentUser, currentPass, newPass })  
-      })  
+    fetch(`${USERS_SCRIPT_URL}?action=validate&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`)  
       .then(r => r.json())  
       .then(data => {  
-        if (data.success) { alert("تم التغيير!"); closePasswordModal(); }  
-        else alert(data.message || "فشل التغيير");  
+        loginBtn.innerHTML = 'دخول';
+        loginBtn.disabled = false;
+
+        if (data.success) {  
+          currentUserData = data.userData;  
+          document.getElementById("currentUserHidden").value = user;
+          document.getElementById("loginSection").style.display = "none";  
+
+          if (user === "admin") {  
+            document.getElementById("adminSection").style.display = "block";  
+            loadAdminData();  
+          } else {  
+            document.getElementById("mainContainer").style.display = "block";  
+            loadUserGroups();  
+            loadUserRequests();  
+          }  
+        } else {  
+          error.style.display = "block";  
+        }  
       })  
-      .catch(() => alert("فشل الاتصال"));  
+      .catch(err => {  
+        console.error(err);  
+        loginBtn.innerHTML = 'دخول';
+        loginBtn.disabled = false;
+        error.textContent = "فشل الاتصال بالخادم!";  
+        error.style.display = "block";  
+      });  
+  }
+
+  function loadUserGroups() {  
+   const groupSelect = document.getElementById("groupSelect");  
+    const currentUser = document.getElementById("currentUserHidden").value;
+  
+    console.log("🔄 تحميل مجموعات لـ", currentUser);
+    groupSelect.innerHTML = '<option>جاري تحميل المجموعات...</option>';  
+
+    fetch(`${USERS_SCRIPT_URL}?action=getGroups&user=${encodeURIComponent(currentUser)}`)  
+      .then(r => r.json())  
+      .then(data => {  
+        console.log("📋 مجموعات المستخدم:", data);
+      
+        groupSelect.innerHTML = '<option disabled selected value="">اختر المجموعة</option>';  
+      
+        if (data.groups && data.groups.length > 0) {  
+          data.groups.forEach(group => {  
+            const option = document.createElement("option");  
+            option.text = group; 
+            option.value = group;  
+            groupSelect.add(option);  
+          });  
+          console.log("✅ تم تحميل", data.groups.length, "مجموعة");
+        } else {
+          groupSelect.innerHTML += '<option disabled>لا توجد مجموعات</option>';
+        }
+      })  
+      .catch(err => {  
+        console.error("❌ خطأ تحميل المجموعات:", err);
+        groupSelect.innerHTML = '<option>فشل التحميل</option>';
+      });  
+  }
+  function loadAdminData() {
+    const tableBody = document.getElementById("tableBody");  
+    tableBody.innerHTML = '<tr><td colspan="11">جاري التحميل...</td></tr>';
+
+    fetch(`${FORM_SCRIPT_URL}?action=getAll`)  
+    .then(r => r.json())  
+    .then(data => {  
+     console.log("🔍 بيانات الأدمن:", data[0]); // ✅ للتشخيص
+      tableBody.innerHTML = "";  
+    
+      if (!data || data.length === 0) {  
+       tableBody.innerHTML = '<tr><td colspan="11" style="color:var(--muted);">لا توجد بيانات</td></tr>';  
+        return;  
+      }  
+
+      data.forEach((row, index) => {  
+       console.log(`صف ${index + 1}:`, row); // ✅ تشخيص
+       const tr = document.createElement("tr");  
+      
+        // ✅ الترتيب الصحيح حسب Google Sheets
+       tr.innerHTML = `
+          <td>${row.station || '-'}</td>
+          <td>${row.groupName || '-'}</td>
+          <td>${row.orderNum || '-'}</td>
+          <td>${formatDate(row.orderDate)}</td>
+          <td>${row.workType || '-'}</td>
+          <td>${row.subject || '-'}</td>
+          <td>${row.status || '-'}</td>
+          <td>${row.orderPos || '-'}</td>
+          <td>${row.doneWork || '-'}</td>
+          <td>${row.spareParts || '-'}</td>
+         <td>${row.notes || '-'}</td>
+        `;
+       tableBody.appendChild(tr);  
+     });  
+   })  
+   .catch(err => {  
+     console.error("❌ خطأ:", err);  
+      tableBody.innerHTML = '<tr><td colspan="11" style="color:var(--danger);">فشل التحميل</td></tr>';  
+    });  
+  }
+  function filterTable(tableId, searchTerm) {  
+    const table = document.getElementById(tableId);
+    const rows = table.querySelectorAll('tbody tr');  // ✅ فقط صفوف tbody
+    const searchLower = searchTerm.toLowerCase().trim();
+
+    // إخفاء رسائل "جاري التحميل" أو "لا توجد بيانات"
+    const loadingRows = table.querySelectorAll('tbody tr td[colspan]');
+    loadingRows.forEach(row => row.parentElement.style.display = 'none');
+
+    if (searchLower === '') {
+      rows.forEach(row => row.style.display = '');
+      return;
     }
 
-    // Events
-    window.onclick = function (event) {  
-      if (event.target.id === "changePasswordModal") closePasswordModal();  
-    };
+    let foundCount = 0;
+    rows.forEach(row => {
+     const cells = row.getElementsByTagName("td");
+      let found = false;
 
-    document.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter' && document.getElementById('loginSection').style.display !== 'none') {
-        validateLogin();
-      }
+    for (let j = 0; j < cells.length - 1; j++) {  // ✅ استثناء عمود التعديل
+      if (cells[j].textContent.toLowerCase().includes(searchLower)) { 
+        found = true;
+        break; 
+      }  
+      }  
+      row.style.display = found ? "" : "none";
+      if (found) foundCount++;
     });
 
-  </script>  
+    // إضافة رسالة "لا توجد نتائج" إذا لم يوجد شيء
+    if (foundCount === 0) {
+     const tbody = table.querySelector('tbody');
+     const noResultsRow = tbody.querySelector('.no-results-row');
+      if (!noResultsRow) {
+        const tr = document.createElement('tr');
+        tr.className = 'no-results-row';
+        tr.innerHTML = `<td colspan="${tableId === 'adminTable' ? '11' : '12'}" style="color:var(--muted); padding:40px; text-align:center; font-size:16px;">لا توجد نتائج مطابقة لـ "${searchTerm}"</td>`;
+        tbody.appendChild(tr);
+      }
+    } else {
+      const noResultsRow = table.querySelector('.no-results-row');
+      if (noResultsRow) noResultsRow.remove();
+    }
+  }
+  function toggleView(view, keepEdit = false) {  
+   const formView = document.getElementById('formView');  
+    const tableView = document.getElementById('tableView');  
+    const btnForm = document.getElementById('btnForm');  
+   const btnTable = document.getElementById('btnTable');
+
+   if (view === 'form') {  
+     formView.style.display = 'block';  
+     tableView.style.display = 'none';  
+     btnForm.classList.add('active');  
+     btnTable.classList.remove('active');  
+
+     // ✅ لا تصفر بيانات التعديل
+     if (!keepEdit) {
+        resetUI();
+     }
+
+    } else {  
+     formView.style.display = 'none';  
+     tableView.style.display = 'block';  
+     btnForm.classList.remove('active');  
+     btnTable.classList.add('active');  
+     loadUserRequests();  
+    }  
+  }
+
+  // ✅ تحميل طلبات المستخدم المُحسّن
+  function loadUserRequests() {
+    const tableBody = document.getElementById("userTableBody");
+    const currentUser = document.getElementById("currentUserHidden").value;
+
+    tableBody.innerHTML = '<tr><td colspan="12">جاري التحميل...</td></tr>';
+
+    fetch(`${FORM_SCRIPT_URL}?action=get&user=${encodeURIComponent(currentUser)}`)
+      .then(r => r.json())
+      .then(data => {
+        console.log("📋 طلبات المستخدم:", data);
+        tableBody.innerHTML = "";
+      
+        if (!data || data.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="12" style="color:var(--muted);">لا توجد طلبات</td></tr>';
+          return;
+        }
+
+        data.forEach((row) => {
+          const tr = document.createElement("tr");
+        
+          // ✅ الحل الصحيح - استخدم row.row مباشرة
+          const actualRowNumber = row.row; // دائماً رقم الصف الحقيقي من الخادم
+        
+          console.log(`📊 صف ${actualRowNumber}:`, row); // للتتبع
+        
+          tr.innerHTML = `
+            <td><strong>${row.station || currentUser}</strong></td>
+            <td>${row.groupName || '-'}</td>
+            <td>${row.orderNum || '-'}</td>
+            <td>${formatDate(row.orderDate)}</td>
+            <td>${row.workType || '-'}</td>
+            <td>${row.subject || '-'}</td>
+            <td>${row.status || '-'}</td>
+            <td>${row.orderPos || '-'}</td>
+            <td>${row.doneWork || '-'}</td>
+            <td>${row.spareParts || '-'}</td>
+            <td>${row.notes || '-'}</td>
+            <td><button class="btn-edit" onclick="editRow(${actualRowNumber})">تعديل</button></td>
+          `;
+          tableBody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        console.error("❌ خطأ تحميل الطلبات:", err);
+        tableBody.innerHTML = '<tr><td colspan="12" style="color:var(--danger);">فشل التحميل</td></tr>';
+      });
+  }
+ 
+  
+  
+  
+  function editRow(rowNumber) {
+    console.log("🎯 editRow - rowNumber:", rowNumber);
+
+   const row = parseInt(rowNumber);
+   if (isNaN(row)) {
+     alert("❌ رقم الصف غير صحيح: " + rowNumber);
+     return;
+   }
+
+   const currentUser = document.getElementById("currentUserHidden").value;
+    const url = `${FORM_SCRIPT_URL}?action=getRow&user=${encodeURIComponent(currentUser)}&row=${row}`;
+  
+    console.log("📡 جاري جلب الصف:", url);
+
+    fetch(url)
+      .then(response => response.json())
+      .then(result => {
+        console.log("📋 Result:", result);
+
+        if (result.error) {
+          alert(`❌ ${result.error}`);
+          return;
+        }
+
+        // تعبئة النموذج
+        document.getElementById('editRow').value = result.row;
+        document.getElementById('groupSelect').value = result.groupName || '';
+        document.querySelector('input[name="orderNum"]').value = result.orderNum || '';
+        document.querySelector('input[name="orderDate"]').value = result.orderDateInput || '';
+        document.querySelector('select[name="workType"]').value = result.workType || '';
+        document.querySelector('textarea[name="subject"]').value = result.subject || '';
+        document.getElementById('statusSelect').value = result.status || '';
+       document.querySelector('select[name="orderPos"]').value = result.orderPos || '';
+        document.querySelector('textarea[name="doneWork"]').value = result.doneWork || '';
+       document.querySelector('textarea[name="spareParts"]').value = result.spareParts || '';
+       document.querySelector('textarea[name="notes"]').value = result.notes || '';
+
+       updateStatusBox(result.status || '');
+        toggleView('form',true);
+        document.getElementById('submitBtn').innerHTML = '<span>تحديث الطلب</span>';
+
+       console.log("✅ تم تعبئة النموذج للصف:", result.row);
+     })
+     .catch(error => {
+        console.error("❌ خطأ:", error);
+        alert("❌ فشل جلب البيانات");
+     });
+  }
+  function updateStatusBox(status) {  
+    const box = document.getElementById("statusBox");  
+    box.classList.remove("bg-urgent", "bg-normal", "bg-Whenstopping");
+
+    if (status === "عاجل") {  
+      box.textContent = "الحالة: عاجل"; box.classList.add("bg-urgent");  
+    } else if (status === "عادي") {  
+      box.textContent = "الحالة: عادي"; box.classList.add("bg-normal");  
+    } else if (status === "لحين التوقف") {  
+      box.textContent = "الحالة: لحين التوقف"; box.classList.add("bg-Whenstopping");  
+    } else {  
+      box.textContent = "يرجى تحديد الحالة";  
+    }  
+  }
+
+  function resetUI() {  
+    document.getElementById("submitBtn").innerHTML = '<span>إرسال الطلب</span>';  
+    document.getElementById("statusSelect").value = "";  
+    document.getElementById("editRow").value = "-1";  
+    updateStatusBox("");  
+    console.log("🔄 تم إعادة تعيين النموذج");
+  }
+
+  // ✅ إرسال النموذج - النسخة المُصححة (الحل الرئيسي)
+  document.getElementById("maintenanceForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+  
+    const isEditMode = document.getElementById("editRow").value !== "-1";
+    const rowNumber = document.getElementById("editRow").value;
+    const submitBtn = document.getElementById("submitBtn");
+    const currentUser = document.getElementById("currentUserHidden").value;
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="spinner"></div>جاري الحفظ...';
+
+    // ✅ FormData مع JSON
+    const formData = new FormData();
+    formData.append('action', isEditMode ? 'update' : 'add');
+    formData.append('station', currentUser);
+    formData.append('row', rowNumber);
+    formData.append('groupName', document.getElementById("groupSelect").value);
+    formData.append('orderNum', document.querySelector('input[name="orderNum"]').value);
+    formData.append('orderDate', document.querySelector('input[name="orderDate"]').value);
+    formData.append('workType', document.querySelector('select[name="workType"]').value);
+    formData.append('subject', document.querySelector('textarea[name="subject"]').value);
+    formData.append('status', document.getElementById('statusSelect').value);
+    formData.append('orderPos', document.querySelector('select[name="orderPos"]').value);
+    formData.append('doneWork', document.querySelector('textarea[name="doneWork"]').value);
+    formData.append('spareParts', document.querySelector('textarea[name="spareParts"]').value);
+    formData.append('notes', document.querySelector('textarea[name="notes"]').value);
+
+   fetch(FORM_SCRIPT_URL, {
+     method: 'POST',
+      body: formData
+     })
+  .then(r => r.json())
+     .then(result => {
+     console.log("✅ Save result:", result);
+     submitBtn.disabled = false;
+    
+     if (result.success) {
+       showToast(result.message);
+      
+        // إعادة تحميل البيانات فوراً
+      setTimeout(() => {
+          this.reset();
+         resetUI();
+            loadUserRequests(); // 🔄 تحديث الجدول
+       }, 500);
+      } else {
+        showToast("❌ " + (result.error || "فشل الحفظ"), true);
+     }
+    })
+    .catch(error => {
+      console.error("❌ Save error:", error);
+      submitBtn.disabled = false;
+     submitBtn.innerHTML = isEditMode ? '<span>تحديث الطلب</span>' : '<span>إرسال الطلب</span>';
+      showToast("❌ خطأ الاتصال", true);
+    });
+  });;
+
+  // ✅ عرض إشعار Toast مُحسّن
+  function showToast(message, isError = false) {
+    const toast = document.createElement("div");  
+    toast.className = "toast";  
+    toast.style.background = isError ? 
+      "linear-gradient(135deg, #ef4444, #dc2626)" : 
+      "linear-gradient(135deg, #10b981, #059669)";
+    toast.textContent = message;  
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);  
+  }
+
+  // أحداث الحالة
+  document.getElementById("statusSelect").addEventListener("change", function () {  
+    updateStatusBox(this.value);  
+  });
+
+  // كلمة المرور
+  function openPasswordModal() { document.getElementById("changePasswordModal").style.display = "flex"; }
+  function closePasswordModal() { 
+    document.getElementById("changePasswordModal").style.display = "none";  
+    document.getElementById("currentPassword").value = "";  
+    document.getElementById("newPassword").value = "";  
+    document.getElementById("confirmPassword").value = "";  
+  }
+
+  function changePassword() {  
+    const currentPass = document.getElementById("currentPassword").value;  
+    const newPass = document.getElementById("newPassword").value;  
+    const confirmPass = document.getElementById("confirmPassword").value;  
+    const currentUser = document.getElementById("currentUserHidden").value;
+
+    if (newPass !== confirmPass) { 
+      showToast("❌ كلمات المرور غير متطابقة", true); 
+      return; 
+    }
+    if (!currentUser) { 
+      showToast("❌ سجل دخول أولاً", true); 
+      return; 
+    }
+
+    fetch(USERS_SCRIPT_URL, {  
+      method: 'POST',  
+      body: new URLSearchParams({ action: 'changePassword', user: currentUser, currentPass, newPass })  
+    })  
+    .then(r => r.json())  
+    .then(data => {  
+      if (data.success) { 
+        showToast("✅ تم تغيير كلمة المرور!"); 
+        closePasswordModal(); 
+      } else { 
+        showToast("❌ " + (data.message || "فشل التغيير"), true); 
+      }  
+    })  
+    .catch(() => showToast("❌ فشل الاتصال", true));  
+  }
+
+  // Events
+  window.onclick = function (event) {  
+    if (event.target.id === "changePasswordModal") closePasswordModal();  
+  };
+
+  document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && document.getElementById('loginSection').style.display !== 'none') {
+      validateLogin();
+    }
+  });
+
+</script>  
 </body>  
 </html>
